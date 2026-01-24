@@ -67,7 +67,7 @@ npm start
 
 #### Web
 
-![Home Page](https://user-images.githubusercontent.com/67114280/173543647-99ab2e92-b053-46b3-96c4-8881beb664f0.png)
+<!-- ![Home Page](https://user-images.githubusercontent.com/67114280/173543647-99ab2e92-b053-46b3-96c4-8881beb664f0.png)
 
 ![Explore Page](https://user-images.githubusercontent.com/67114280/173543906-06adb116-ca6b-4216-9df9-90bb5ff189f9.png)
 
@@ -90,4 +90,4 @@ npm start
 
 ![Post Page](https://user-images.githubusercontent.com/67114280/173548696-2667fddf-4843-45a8-aa72-f0ae7a1029e7.svg)
 
-![Profile Page](https://user-images.githubusercontent.com/67114280/173548132-1433a1e5-d2b3-4741-9ad1-8dc3b6449a5e.svg)
+![Profile Page](https://user-images.githubusercontent.com/67114280/173548132-1433a1e5-d2b3-4741-9ad1-8dc3b6449a5e.svg) -->

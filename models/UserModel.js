@@ -16,6 +16,7 @@ const userSchema = mongoose.Schema({
         type: String,
         default: image
     },
+
     fullName: {
         type: String,
         required: [true, "please Provide FullName"],
@@ -24,6 +25,7 @@ const userSchema = mongoose.Schema({
         unique: true,
         maxlength: 20,
     },
+
     email: {
         type: String,
         unique: true,
@@ -35,12 +37,14 @@ const userSchema = mongoose.Schema({
         }
 
     },
+
     password: {
         type: String,
         required: [true, "please Give a Strong password"],
         trim: true,
         minlength: 8
     },
+
     bio:
     {
         type: String,
@@ -48,6 +52,7 @@ const userSchema = mongoose.Schema({
         minlength: 2,
         maxlength: 4
     },
+
     followers:
         [
             {
@@ -55,6 +60,7 @@ const userSchema = mongoose.Schema({
                 ref: "User",
             }
         ],
+        
     following: [
         {
             type: mongoose.Types.ObjectId,

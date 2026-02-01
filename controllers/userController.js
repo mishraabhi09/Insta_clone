@@ -71,9 +71,15 @@ const updateUser = async (req, res) => {
     });
 };
 
+//controller to follow the User-->>
 const followUser = async (req, res) => {
 
+    // userId you want to follow comes from frontend
+    // when you click follow to someone's id
     const { userId } = req.body;
+
+    // current logged-in user Id-->>
+    // req.user already assures that the user is already logged-in
     const currentId = req.user.userId;
 
     //make a user-->>
@@ -83,7 +89,7 @@ const followUser = async (req, res) => {
     user = await User.findByIdAndUpdate(
         userId,
         {
-            $push: { followers: currentId },
+            $addtoSet: { followers: currentId },
         },
         {
             new: true
@@ -94,7 +100,7 @@ const followUser = async (req, res) => {
     user = await User.findByIdAndUpdate(
         currentId,
         {
-            $push: { following: userId }
+            $addtoSet: { following: userId }
         },
         {
             new: true,
@@ -114,8 +120,26 @@ const followUser = async (req, res) => {
             expiresIn: process.env.JWT_LIFETIME,
         }
 
+        // Control flow-->> 
+
+        // Step - by - step flow:
+
+        // 1 - User clicks Follow
+        // 2 - Frontend sends userId to backend
+        // 3 - Auth middleware adds req.user
+        // 4 - Backend:
+
+        // Adds current user to target user’s followers
+
+        // Adds target user to current user’s following
+        // 5️ - Backend generates new JWT token
+        // 6️ - Backend sends updated user data + token
+        // 7 - Frontend updates UI and stores token
+
     );
 
+    // insures that the password can send to the frontend side
+    // hence clean the password
     user.password = undefined;
 
     res.status(StatusCodes.OK).json(
@@ -132,6 +156,176 @@ const followUser = async (req, res) => {
     )
 };
 
+//controller to unfollow the User-->>
+const unfollowUser = async (req, res) => {
+
+    // below is the id of the user send by frontend 
+    // whom you want to unfollow by clicking on the unfollow button
+    const { userId } = req.body;
+
+    // this is the current logged-in user id
+    const currentId = req.user.userId;
+
+    // default user-->>
+    let user;
+
+    // remove from followers, samne wali ki id se-->>
+    user = await User.findByIdAndUpdate(
+        userId,
+        {
+            $pull: { followers: currentId },
+        },
+        // return the updated followers list at the end-->>
+        {
+            new: true,
+        }
+    );
+
+    // remove from following-->>
+    user = await User.findByIdAndUpdate(
+        currentId,
+        {
+            $pull: { following: userId },
+        },
+        // returning the updated following list-->>
+        {
+            new: true,
+        }
+    );
+
+    // this fresh token is passed to the frontend-->>
+    const token = jwt.sign(
+        {
+            username: user.username,
+            useremail: user.email,
+            userId: user._id,
+            userFollowing: user.userFollowing
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: process.env.JWT_LIFETIME,
+        }
+    );
+
+    // make sure that the password is not passed to client side-->>
+    user.password = undefined;
+
+    res.status(StatusCodes.OK).json(
+        {
+            id: user._id,
+            avatar: user.avatar,
+            bio: user.bio,
+            email: user.email,
+            username: user.username,
+            fullName: user.fullName,
+            followers: user.followers,
+            following: user.following,
+            token,
+        }
+    )
+};
+
+//controller for seeing the userprofile of a person-->>
+const userProfile = async (req, res) => {
+
+    // id of the user whom id you want to see
+    // client side this id to server side-->>
+    // extract the user_id from the URL
+    // example -->> /api/user/profile/65ab12cd34
+    // req.params = { id: "65ab12cd34" }
+    const { id: user_id } = req.params;
+
+    // if user is notFound-->>
+    if (!user) {
+        return res.status(404).json({ msg: "User not found" });
+    }
+
+    let user = await User.findOne({ _id: user_id })
+        .populate("followers", "_id username fullName email avatar bio")
+        .populate("following", "_id username fullname email avatar bio");
+
+    let feed = await Feed.findOne({ postedBy: user_id })
+        .sort({ created: -1 })
+        .populate("postedBy", "_id username fullName email avatar bio")
+        .populate("comment.CommentedBy", "_id username fullName email avatar bio");
+
+    // feed count-->>
+    feed = feed.map((data, index) => {
+        return { ...data._doc, liked: data.likes.includes(user_id) }.limit(10).skip(page * 10);
+    });
+
+    user.password = undefined;
+
+    let totalFollowers = user.followers.length;
+    let totalFollowing = user.following.length;
+
+    let totalPosts = feed.length;
+
+    res.status(StatusCodes.OK).json(
+        {
+            user,
+            totalFollowers,
+            totalFollowing,
+            totalPosts,
+            feed,
+        }
+    )
+
+    // Control flow-->>
+    // 1️ - Frontend requests user profile by ID
+    // 2️-  Backend extracts user_id from URL
+    // 3️ - Backend fetches user document
+    // 4️ - Backend populates followers & following
+    // 5️ - Backend fetches all posts by that user
+    // 6️ - Backend sorts posts by date
+    // 7️ - Backend populates:
+
+    // post owner
+
+    // comment authors
+    // 8️ - Backend calculates counts
+    // 9️ - Backend removes password
+    // 10 -Backend sends profile + feed data
+};
+
+//controller to Search the User-->>
+const searchUser = async (req, res) => {
+
+    const { search } = req.query;
+
+    if (!search) {
+        return res.status(400).json({ msg: "Search query is required" });
+    }
+
+    const user = await User.find(
+        {
+            username: { $regex: search, $options: "i" },
+        }
+    )
+        // removes the password from the result-->>
+        .select("-password")
+        .limit(10);
+    // limit is used for less load on DB
+    res.status(StatusCodes.OK).json(
+        {
+            user
+        }
+    );
+
+    // Control Flow-->>
+    // 1️ - User types text in search box
+    // 2️ - Frontend sends request with query param
+    // 3️ - Backend extracts search
+    // 4️ - MongoDB searches usernames using regex
+    // 5️ - Password field removed
+    // 6️ - Backend returns matching users
+    // 7️ - Frontend displays results in dropdown / list
+};
+
 module.exports = {
-    updateUser, followUser
+    updateUser,
+    followUser,
+    unfollowUser,
+    userProfile,
+    searchUser
 }

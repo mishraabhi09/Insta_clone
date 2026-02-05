@@ -1,14 +1,14 @@
 import User from "../models/UserModel.js";
-const Feed = require("../models/feedModel.js");
-const { StatusCodes } = require("http-status-codes");
-const jwt = require("jsonwebtoken");
-const cloudinary = require("../utils/cloudinary/config.js");
+import Feed from "../models/feedModel.js";
+import { StatusCodes } from "http-status-codes";
+import jwt from "jsonwebtoken";
+import cloudinary from "../utils/cloudinary/config.js";
 
-const {
+import {
     BadRequestError,
     NotFoundError,
     UnAuthenticatedError
-} = require("../errors/index.js");
+} from "../errors/index.js";
 
 // controller to update the User-->>
 const updateUser = async (req, res) => {
@@ -157,7 +157,7 @@ const followUser = async (req, res) => {
 };
 
 //controller to unfollow the User-->>
-const unfollowUser = async (req, res) => {
+const unFollowUser = async (req, res) => {
 
     // below is the id of the user send by frontend 
     // whom you want to unfollow by clicking on the unfollow button
@@ -322,10 +322,10 @@ const searchUser = async (req, res) => {
     // 7️ - Frontend displays results in dropdown / list
 };
 
-module.exports = {
+export {
     updateUser,
     followUser,
-    unfollowUser,
+    unFollowUser,
     userProfile,
     searchUser
 }

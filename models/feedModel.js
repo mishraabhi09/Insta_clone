@@ -1,4 +1,4 @@
-const mongoose  = require("mongoose");
+import mongoose  from "mongoose";
 
 const feedSchema = mongoose.Schema({
 
@@ -46,4 +46,4 @@ const feedSchema = mongoose.Schema({
     ]
 });
 
-module.exports = mongoose.model("Feed", feedSchema);
+export default mongoose.model("Feed", feedSchema);

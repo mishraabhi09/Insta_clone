@@ -1,13 +1,13 @@
-const User = require("../models/UserModel.js");
-const { StatusCodes } = require("http-status-codes");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt.js");
+import User from "../models/UserModel.js";
+import { StatusCodes } from "http-status-codes";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
-const {
+import {
     BadRequestError,
     NotFoundError,
     UnAuthenticatedError
-} = require("../errors/index.js");
+} from "../errors/index.js" ;
 
 // register Route-->>
 const register = async (req, res) => {
@@ -87,7 +87,7 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign({
-        userId = user._id;
+        userId : user._id,
         username: user.username,
         userEmail: user.email,
         userFollowing: user.following,
@@ -115,4 +115,4 @@ const login = async (req, res) => {
 
 
 
-module.exports = { register, login };
+export { register, login };

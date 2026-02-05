@@ -1,0 +1,23 @@
+import express from "express";
+
+import { followUser,
+    searchUser,
+    unFollowUser,
+    updateUser,
+    userProfile
+} from "../controllers/userController.js";
+
+const router = express.Router();
+
+router.route("/User").patch(updateUser);
+
+router.route("/userProfile/:id").get(userProfile);
+
+router.route("/followUser").patch(followUser);
+
+router.route("/unFollowUser").patch(unFollowUser);
+
+router.route("/search/user").get(searchUser);
+
+export default router;
+

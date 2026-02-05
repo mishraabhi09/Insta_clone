@@ -1,17 +1,17 @@
 import { StatusCodes } from "http-status-codes";
-const Feed = require("../models/feedModel.js");
-const cloudinary = require("../utils/cloudinary/config.js");
+import Feed from "../models/feedModel.js";
+import cloudinary from "../utils/cloudinary/config.js";
 
-const {
+import {
     BadRequestError,
     NotFoundError,
     UnAuthenticatedError
-} = require("../errors/index.js");
+} from "../errors/index.js";
 
-const checkPermission = require("../errors/checkPermission.js");
+import checkPermission from "../errors/checkPermission.js";
 
 // controller function for getting all Feed content-->>
-const getAllFeed = async (req, res) => {
+const getAllFeeds = async (req, res) => {
 
     const feed = await Feed.find({})
         .sort({ created: -1 }) // it comes as decreasing order, means the latest one comes first
@@ -131,7 +131,7 @@ const likeFeed = async (req, res) => {
 };
 
 // controller function to getAllFollowingFeed-->>
-const getAllFollowingFeed = async (req, res) => {
+const getAllFollowingFeeds = async (req, res) => {
 
     let followingFeeds = await Feed.find(
         {
@@ -152,7 +152,7 @@ const getAllFollowingFeed = async (req, res) => {
 }
 
 // controller function to find the currentuserFeed-->>
-const currentUserFeed = async (req, res) => {
+const currentUserFeeds = async (req, res) => {
 
     const feed = await Feed.find({ postedBy: req.user.userId })
         .sort({ created: -1 })
@@ -211,14 +211,14 @@ const getAllComments = async (req, res) => {
     })
 }
 
-module.exports = {
-    getAllFeed,
+export {
+    getAllFeeds,
     createFeed,
     getFeed,
     deleteFeed,
     likeFeed,
-    getAllFollowingFeed,
-    currentUserFeed,
+    getAllFollowingFeeds,
+    currentUserFeeds,
     commentOnFeed,
     getAllComments
 }

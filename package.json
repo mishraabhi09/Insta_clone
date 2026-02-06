@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "type": "module",
+  "proxy": "http://localhost:5000",
   "scripts": {
     "build-client": "cd client && npm run build",
     "install-client": "cd client && npm install",

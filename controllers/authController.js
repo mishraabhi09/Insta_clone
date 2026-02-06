@@ -7,19 +7,22 @@ import {
     BadRequestError,
     NotFoundError,
     UnAuthenticatedError
-} from "../errors/index.js" ;
+} from "../errors/index.js";
 
 // register Route-->>
 const register = async (req, res) => {
+    console.log("Req is coming from frontend : " , req.body);
 
     const { username, fullName, email, password } = req.body;
 
     if (!email || !password || !username || !fullName) {
-        throw new Error("Please provide All Values");
+        throw new BadRequestError("Please provide All Values");
     };
 
+    const isUserExists = await User.findOne({ email });
+
     if (isUserExists) {
-        throw new Error("User Already Exists");
+        throw new BadRequestError("User Already Exists");
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -39,7 +42,7 @@ const register = async (req, res) => {
     const token = jwt.sign(
         {
             userId: user._id,
-            username: user.name,
+            username: user.username,
             userEmail: user.email,
             userFollowing: user.following,
         },
@@ -67,11 +70,13 @@ const register = async (req, res) => {
 
 
 const login = async (req, res) => {
+    
+    console.log(req.body);
 
     const { email, password } = req.body;
 
     if (!email || !password) {
-        throw new Error("Please enter all the Values");
+        throw new BadRequestError("Please enter all the Values");
     }
 
     const user = await User.findOne({ email });
@@ -87,7 +92,7 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign({
-        userId : user._id,
+        userId: user._id,
         username: user.username,
         userEmail: user.email,
         userFollowing: user.following,
@@ -115,4 +120,4 @@ const login = async (req, res) => {
 
 
 
-export { register, login };
+export { register, login};

@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 
-const errorHandlerMiddleware = async (err, req, res, next) => {
+const errorHandlerMiddleware = (err, req, res, next) => {
 
     const defaultError =
     {
@@ -21,7 +21,7 @@ const errorHandlerMiddleware = async (err, req, res, next) => {
 
     if (err.code && err.code === 11000) {
         defaultError.statusCode = StatusCodes.BAD_REQUEST,
-            defaultError.msg = `${object.keys(err.keyValue)} field has to be unique!!`
+            defaultError.msg = `${Object.keys(err.keyValue)} field has to be unique!!`
     }
 
     res.status(defaultError.statusCode).json(

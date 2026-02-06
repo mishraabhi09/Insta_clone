@@ -18,10 +18,10 @@ import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
 import feedRoute from "./routes/feedRoute.js";
 
-// //middleware
-// import notFoundMiddleware from "./middleware/not-found.js";
-// import errorHandlerMiddleware from "./middleware/error-handler.js";
-// import authenticateUser from "./middleware/auth.js";
+//middleware
+import notFoundMiddleware from "./middleware/not-found.js";
+import errorHandlerMiddleware from "./middleware/error-handler.js";
+import authenticateUser from "./middleware/auth.js";
 
 import helmet from "helmet";
 import xss from "xss-clean";
@@ -39,6 +39,8 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(helmet());
 app.use(xss());
 app.use(mongoSanitize());
+
+app.set('trust proxy', 1) // 🔥 MOST IMPORTANT LINE
 
 //Route
 app.use("/api/v1/auth", authRoute);

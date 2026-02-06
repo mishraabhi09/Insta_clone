@@ -53,7 +53,7 @@ const userSchema = mongoose.Schema({
         type: String,
         default: "Hello there!!😊",
         minlength: 2,
-        maxlength: 4
+        maxlength: 20
     },
 
     followers:

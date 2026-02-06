@@ -19,6 +19,7 @@ export const registerUser = createAsyncThunk(
   "user/registerUser",
   async (user, thunkAPI) => {
     try {
+      console.log("Data send to Backend : ",user);
       const resp = await axios.post("/api/v1/auth/register", user);
 
       return resp.data;
@@ -32,6 +33,7 @@ export const loginUser = createAsyncThunk(
   "user/loginUser",
   async (user, thunkAPI) => {
     try {
+      console.log("Data send to backend :" , user);
       const resp = await axios.post("api/v1/auth/login", user);
 
       return resp.data;

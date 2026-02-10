@@ -9,7 +9,7 @@ import { followUser,
 
 const router = express.Router();
 
-router.route("/User").patch(updateUser);
+router.route("/user").patch(updateUser);
 
 router.route("/userProfile/:id").get(userProfile);
 

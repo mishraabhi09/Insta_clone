@@ -11,7 +11,6 @@ import { Link } from "react-router-dom";
 import { More, Heart, Message, Save2 } from "iconsax-react";
 
 const PostContainer = ({ data }) => {
-  const [like, setLike] = useState(data?.likes.length);
   const dispatch = useDispatch();
 
   return (
@@ -51,9 +50,11 @@ const PostContainer = ({ data }) => {
                     color="#f47373"
                     variant="Bold"
                     onClick={() => {
-                      setLike(like - 1);
-                      dispatch(feedLikeDislike({ postId: data?._id }));
-                      window.location.reload(false);
+                      if (data?._id) {
+                        dispatch(feedLikeDislike({ postId: data._id })).unwrap().then(() => {
+                          // Refresh the data after like action
+                        });
+                      }
                     }}
                   />
                 </>
@@ -63,9 +64,11 @@ const PostContainer = ({ data }) => {
                     size="32"
                     color="#697689"
                     onClick={() => {
-                      setLike(like + 1);
-                      dispatch(feedLikeDislike({ postId: data?._id }));
-                      window.location.reload(false);
+                      if (data?._id) {
+                        dispatch(feedLikeDislike({ postId: data._id })).unwrap().then(() => {
+                          // Refresh the data after like action
+                        });
+                      }
                     }}
                   />
                 </>
@@ -88,15 +91,16 @@ const PostContainer = ({ data }) => {
             </p>
 
             {data?.comments?.slice(0, 2).map((comment) => {
+              if (!comment || !comment.commentedBy) return null;
               return (
                 <p
                   className="profile_container-footer-caption--comment-text"
                   key={comment._id}
                 >
                   <span className="profile_container-footer-caption--username">
-                    {comment?.commentedBy?.username}
+                    {comment.commentedBy.username}
                   </span>{" "}
-                  {comment?.comment}
+                  {comment.comment}
                 </p>
               );
             })}

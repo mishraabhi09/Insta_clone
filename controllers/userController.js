@@ -2,9 +2,9 @@ import User from "../models/UserModel.js";
 import Feed from "../models/feedModel.js";
 import { StatusCodes } from "http-status-codes";
 import jwt from "jsonwebtoken";
-import cloudinary from "../utils/cloudinary/config.js";
+import cloudinary from "../utils/cloudinaryConfig.js";
 
-import {
+import { 
     BadRequestError,
     NotFoundError,
     UnAuthenticatedError
@@ -12,37 +12,32 @@ import {
 
 // controller to update the User-->>
 const updateUser = async (req, res) => {
-
     const { email, fullName, bio, avatar, username } = req.body;
 
-    // if any of these are missing-->>
-    if (!email || !username || !fullName || !bio || !avatar) {
-        throw new BadRequestError("Please provide all Values for Updation of User!!")
+    const currentUser = await User.findById(req.user.userId);
+    if (!currentUser) {
+        throw new NotFoundError("User not found");
     }
 
-    //else
-    const mediaRes = await cloudinary.v2.uploader.upload(avatar,
-        {
+    let avatarUrl = currentUser.avatar;
+    if (avatar) {
+        const mediaRes = await cloudinary.v2.uploader.upload(avatar, {
             folder: "insta-app/user-profiles",
             use_filename: true,
-        }
-    );
+        });
+        avatarUrl = mediaRes.secure_url;
+    }
 
     const user = await User.findByIdAndUpdate(
-
+        { _id: req.user.userId },
         {
-            _id: req.user.userId
+            email: email || currentUser.email,
+            username: username || currentUser.username,
+            fullName: fullName || currentUser.fullName,
+            bio: bio || currentUser.bio,
+            avatar: avatarUrl,
         },
-        {
-            email: email,
-            username: username,
-            fullName: fullName,
-            bio: bio,
-            avatar: mediaRes.secure_url,
-        },
-        {
-            new: true
-        }
+        { new: true }
     );
 
     const token = jwt.sign(
@@ -89,10 +84,10 @@ const followUser = async (req, res) => {
     user = await User.findByIdAndUpdate(
         userId,
         {
-            $addtoSet: { followers: currentId },
+            $addToSet: { followers: currentId },
         },
         {
-            new: true
+            new: true,
         }
     );
 
@@ -100,7 +95,7 @@ const followUser = async (req, res) => {
     user = await User.findByIdAndUpdate(
         currentId,
         {
-            $addtoSet: { following: userId }
+            $addToSet: { following: userId },
         },
         {
             new: true,
@@ -235,41 +230,29 @@ const userProfile = async (req, res) => {
     // req.params = { id: "65ab12cd34" }
     const { id: user_id } = req.params;
 
-    // if user is notFound-->>
+    let user = await User.findOne({ _id: user_id })
+        .populate("followers", "_id username fullName email avatar bio")
+        .populate("following", "_id username fullName email avatar bio");
+
     if (!user) {
         return res.status(404).json({ msg: "User not found" });
     }
 
-    let user = await User.findOne({ _id: user_id })
-        .populate("followers", "_id username fullName email avatar bio")
-        .populate("following", "_id username fullname email avatar bio");
-
-    let feed = await Feed.findOne({ postedBy: user_id })
-        .sort({ created: -1 })
+    let feeds = await Feed.find({ postedBy: user_id })
+        .sort({ createdAt: -1 })
         .populate("postedBy", "_id username fullName email avatar bio")
-        .populate("comment.CommentedBy", "_id username fullName email avatar bio");
+        .populate("comments.commentedBy", "_id username fullName email avatar bio");
 
-    // feed count-->>
-    feed = feed.map((data, index) => {
-        return { ...data._doc, liked: data.likes.includes(user_id) }.limit(10).skip(page * 10);
-    });
+    const mappedFeeds = feeds.map((data) => ({ ...data._doc, liked: data.likes.includes(user_id) }));
+    const limitedFeeds = mappedFeeds.slice(0, 10);
 
     user.password = undefined;
 
     let totalFollowers = user.followers.length;
     let totalFollowing = user.following.length;
+    let totalPosts = mappedFeeds.length;
 
-    let totalPosts = feed.length;
-
-    res.status(StatusCodes.OK).json(
-        {
-            user,
-            totalFollowers,
-            totalFollowing,
-            totalPosts,
-            feed,
-        }
-    )
+    res.status(StatusCodes.OK).json({ user, totalFollowers, totalFollowing, totalFollowings: totalFollowing, totalPosts, feed: limitedFeeds });
 
     // Control flow-->>
     // 1️ - Frontend requests user profile by ID

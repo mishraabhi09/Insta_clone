@@ -23,40 +23,43 @@ const UserProfile = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(getUserProfile(id));
+    if (id) {
+      dispatch(getUserProfile(id));
+    }
   }, [dispatch, id]);
 
   const { user, isLoading, userProfile } = useSelector((state) => state.user);
 
   const handleFollow = (e) => {
     e.preventDefault();
-    dispatch(followUser({ userId: userProfile?.payload?.user?._id }));
+    if (userProfile?.payload?.user?._id) {
+      dispatch(followUser({ userId: userProfile.payload.user._id })).unwrap().then(() => {
+        dispatch(getUserProfile(id));
+      });
+    }
   };
 
   const handleUnFollow = (e) => {
     e.preventDefault();
-    dispatch(unFollowUser({ userId: userProfile?.payload?.user?._id }));
+    if (userProfile?.payload?.user?._id) {
+      dispatch(unFollowUser({ userId: userProfile.payload.user._id })).unwrap().then(() => {
+        dispatch(getUserProfile(id));
+      });
+    }
   };
 
   const FollowUnFollow = () => {
-    if (userProfile?.payload?.user?.followers?.length > 0) {
-      return userProfile?.payload?.user?.followers?.find(
-        (person) => person._id === user?._id
-      ) ? (
-        <>
-          <button className="button-unFollow" onClick={handleUnFollow}>
-            Following
-          </button>
-        </>
-      ) : (
-        <>
-          <button className="button-follow" onClick={handleFollow}>
-            Follow
-          </button>
-        </>
-      );
-    }
-    return (
+    const isFollowing = userProfile?.payload?.user?.followers?.some((person) =>
+      person && user && String(person._id) === String(user._id)
+    );
+    
+    return isFollowing ? (
+      <>
+        <button className="button-unFollow" onClick={handleUnFollow}>
+          Following
+        </button>
+      </>
+    ) : (
       <>
         <button className="button-follow" onClick={handleFollow}>
           Follow
@@ -84,22 +87,25 @@ const UserProfile = () => {
       <ContentWrapper>
         <div className="user_profile">
           <img
-            src={userProfile?.payload?.user?.avatar}
+            src={
+              userProfile?.payload?.user?.avatar || user?.avatar || 
+              "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+            }
             className="profile"
             alt="profile"
           />
           <div className="content1">
             <div className="users">
               <div className="total">
-                <h3>{userProfile?.payload?.totalPosts}</h3>
+                <h3>{userProfile?.totalPosts ?? 0}</h3>
                 <p>Posts</p>
               </div>
               <div className="total">
-                <h3>{userProfile?.payload?.totalFollowers}</h3>
+                <h3>{userProfile?.totalFollowers ?? 0}</h3>
                 <p>Followers</p>
               </div>
               <div className="total">
-                <h3>{userProfile?.payload?.totalFollowings}</h3>
+                <h3>{userProfile?.totalFollowings ?? userProfile?.totalFollowing ?? 0}</h3>
                 <p>Following</p>
               </div>
             </div>

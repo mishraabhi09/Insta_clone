@@ -6,31 +6,28 @@ import {
   removeUserFromLocalStorage,
 } from "../../utils/localStorage";
 
-axios.interceptors.request.use((config) => {
-  const user = getUserFromLocalStorage();
-  if (user) {
-    config.headers.common["authorization"] = `Bearer ${user.token}`;
-  }
-  return config;
-});
-
 export const createFeed = createAsyncThunk(
   "feed/createFeed",
   async (feed, thunkAPI) => {
     try {
+      const userLocal = getUserFromLocalStorage();
+      if (!userLocal || !userLocal.token) {
+        throw new Error('User not authenticated');
+      }
       const resp = await axios.post(`/api/v1/feed`, feed, {
         headers: {
-          authorization: `Bearer ${getUserFromLocalStorage().token}`,
+          authorization: `Bearer ${userLocal.token}`,
         },
       });
 
       return resp.data;
     } catch (error) {
-      if (error.response.status === 401) {
+      if (error.response && error.response.status === 401) {
         removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
         return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
       }
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -39,14 +36,23 @@ export const followUserFeeds = createAsyncThunk(
   "feed/followUserFeeds",
   async (_, thunkAPI) => {
     try {
+      const userLocal = getUserFromLocalStorage();
+      if (!userLocal || !userLocal.token) {
+        throw new Error('User not authenticated');
+      }
       const resp = await axios.get(`api/v1/feed/explore/getFollowing`, {
         headers: {
-          authorization: `Bearer ${getUserFromLocalStorage().token}`,
+          authorization: `Bearer ${userLocal.token}`,
         },
       });
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      if (error.response && error.response.status === 401) {
+        removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
+        return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
+      }
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -55,10 +61,23 @@ export const feedLikeDislike = createAsyncThunk(
   "feed/feedLikeDislike",
   async ({ postId }, thunkAPI) => {
     try {
-      const resp = axios.patch(`/api/v1/feed/like/${postId}`);
+      const userLocal = getUserFromLocalStorage();
+      if (!userLocal || !userLocal.token) {
+        throw new Error('User not authenticated');
+      }
+      const resp = await axios.patch(`/api/v1/feed/like/${postId}`, {}, {
+        headers: {
+          authorization: `Bearer ${userLocal.token}`,
+        },
+      });
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      if (error.response && error.response.status === 401) {
+        removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
+        return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
+      }
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -67,15 +86,24 @@ export const getFeed = createAsyncThunk(
   "feed/getFeed",
   async (id, thunkAPI) => {
     try {
+      const userLocal = getUserFromLocalStorage();
+      if (!userLocal || !userLocal.token) {
+        throw new Error('User not authenticated');
+      }
       const resp = await axios.get(`/api/v1/feed/${id}`, {
         headers: {
-          authorization: `Bearer ${getUserFromLocalStorage().token}`,
+          authorization: `Bearer ${userLocal.token}`,
         },
       });
 
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      if (error.response && error.response.status === 401) {
+        removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
+        return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
+      }
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -84,11 +112,24 @@ export const commentOnFeed = createAsyncThunk(
   "feed/commentOnFeed",
   async ({ postId, comment }, thunkAPI) => {
     try {
-      const resp = await axios.patch(`/api/v1/feed/${postId}`, { comment });
+      const userLocal = getUserFromLocalStorage();
+      if (!userLocal || !userLocal.token) {
+        throw new Error('User not authenticated');
+      }
+      const resp = await axios.patch(`/api/v1/feed/${postId}`, { comment }, {
+        headers: {
+          authorization: `Bearer ${userLocal.token}`,
+        },
+      });
 
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      if (error.response && error.response.status === 401) {
+        removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
+        return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
+      }
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -98,15 +139,24 @@ export const deleteFeed = createAsyncThunk(
   async (postId, thunkAPI) => {
     
     try {
+      const userLocal = getUserFromLocalStorage();
+      if (!userLocal || !userLocal.token) {
+        throw new Error('User not authenticated');
+      }
       const resp = await axios.delete(`/api/v1/feed/${postId}`, {
         headers: {
-          authorization: `Bearer ${getUserFromLocalStorage().token}`,
+          authorization: `Bearer ${userLocal.token}`,
         },
       });
     
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      if (error.response && error.response.status === 401) {
+        removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
+        return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
+      }
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -115,14 +165,23 @@ export const getAllFeeds = createAsyncThunk(
   "feed/getAllFeeds",
   async (_, thunkAPI) => {
     try {
+      const userLocal = getUserFromLocalStorage();
+      if (!userLocal || !userLocal.token) {
+        throw new Error('User not authenticated');
+      }
       const resp = await axios.get(`/api/v1/feed/`, {
         headers: {
-          authorization: `Bearer ${getUserFromLocalStorage().token}`,
+          authorization: `Bearer ${userLocal.token}`,
         },
       });
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      if (error.response && error.response.status === 401) {
+        removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
+        return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
+      }
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -143,12 +202,12 @@ export const feedSlice = createSlice({
     },
     [createFeed.fulfilled]: (state, { payload }) => {
       state.isLoading = false;
-      state.feeds = [...state.feeds, payload];
+      state.feeds.unshift(payload.feed);
       toast.success("Feed Created SuccessFully📷");
     },
     [createFeed.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Failed to create feed');
     },
 
     [followUserFeeds.pending]: (state) => {
@@ -156,11 +215,11 @@ export const feedSlice = createSlice({
     },
     [followUserFeeds.fulfilled]: (state, { payload }) => {
       state.isLoading = false;
-      state.followingUserFeeds = [...state.followingUserFeeds, payload];
+      state.followingUserFeeds = payload.followingFeeds;
     },
     [followUserFeeds.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Failed to load feeds');
     },
 
     [feedLikeDislike.pending]: (state) => {
@@ -168,11 +227,11 @@ export const feedSlice = createSlice({
     },
     [feedLikeDislike.fulfilled]: (state, { payload }) => {
       state.isLoading = false;
-      state.followingUserFeeds = [...state.followingUserFeeds, payload];
+      // The feed will be updated when re-fetched
     },
     [feedLikeDislike.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Like operation failed');
     },
 
     [getFeed.pending]: (state) => {
@@ -180,11 +239,11 @@ export const feedSlice = createSlice({
     },
     [getFeed.fulfilled]: (state, { payload }) => {
       state.isLoading = false;
-      state.feed = { ...state.feed, payload };
+      state.feed = payload.feed;
     },
     [getFeed.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Failed to load feed');
     },
 
     [commentOnFeed.pending]: (state) => {
@@ -192,11 +251,11 @@ export const feedSlice = createSlice({
     },
     [commentOnFeed.fulfilled]: (state, { payload }) => {
       state.isLoading = false;
-      state.feeds = { ...state.feeds, payload };
+      // Comment will be reflected after re-fetching
     },
     [commentOnFeed.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Comment failed');
     },
 
     [deleteFeed.pending]: (state) => {
@@ -208,7 +267,7 @@ export const feedSlice = createSlice({
     },
     [deleteFeed.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Failed to delete feed');
     },
 
     [getAllFeeds.pending]: (state) => {
@@ -216,11 +275,11 @@ export const feedSlice = createSlice({
     },
     [getAllFeeds.fulfilled]: (state, { payload }) => {
       state.isLoading = false;
-      state.feeds = [...state.feeds, payload];
+      state.feeds = payload.feed;
     },
     [getAllFeeds.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Failed to load feeds');
     },
   },
 });

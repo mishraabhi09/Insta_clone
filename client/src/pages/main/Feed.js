@@ -15,6 +15,8 @@ import { More, Heart, Message, Save2, Send, Trash } from "iconsax-react";
 
 import { feedLikeDislike } from "../../features/feed/feedSlice.js";
 
+
+
 import moment from "moment";
 
 import { SpinnerCircularSplit } from "spinners-react";
@@ -33,7 +35,9 @@ const Feed = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(getFeed(id));
+    if (id) {
+      dispatch(getFeed(id));
+    }
   }, [dispatch, id]);
 
   const handleChange = (e) => {
@@ -42,53 +46,53 @@ const Feed = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    if (!id || !feed?.payload?.feed?._id) return;
+    
     const { comment } = values;
     await dispatch(
       commentOnFeed({ postId: feed?.payload?.feed?._id, comment: comment })
-    );
+    ).unwrap().then(() => {
+      dispatch(getFeed(id));
+      setValues({ comment: '' });
+    });
   };
 
   const handleDelete = (e) => {
     e.preventDefault();
-    dispatch(deleteFeed(feed?.payload?.feed?._id));
+    if (feed?.payload?.feed?._id) {
+      dispatch(deleteFeed(feed?.payload?.feed?._id));
+    }
   };
 
   const Likes = () => {
-    if (feed?.payload?.feed?.likes?.length > 0) {
-      return feed?.payload?.feed?.likes?.find((like) => like === user?._id) ? (
-        <>
-          <Heart
-            size="32"
-            color="#f47373"
-            variant="Bold"
-            onClick={() => {
-              dispatch(feedLikeDislike({ postId: feed?.payload?.feed?._id }));
-              window.location.reload(false);
-            }}
-          />
-        </>
-      ) : (
-        <>
-          <Heart
-            size="32"
-            color="#697689"
-            onClick={() => {
-              dispatch(feedLikeDislike({ postId: feed?.payload?.feed?._id }));
-              window.location.reload(false);
-            }}
-          />
-        </>
-      );
-    }
-    return (
+    const isLiked = feed?.payload?.feed?.likes?.some((like) => like && user?._id && like.toString() === user._id.toString());
+    
+    return isLiked ? (
       <>
-        {" "}
+        <Heart
+          size="32"
+          color="#f47373"
+          variant="Bold"
+          onClick={() => {
+            if (id && feed?.payload?.feed?._id) {
+              dispatch(feedLikeDislike({ postId: feed?.payload?.feed?._id })).unwrap().then(() => {
+                dispatch(getFeed(id));
+              });
+            }
+          }}
+        />
+      </>
+    ) : (
+      <>
         <Heart
           size="32"
           color="#697689"
           onClick={() => {
-            dispatch(feedLikeDislike({ postId: feed?.payload?.feed?._id }));
-            window.location.reload(false);
+            if (id && feed?.payload?.feed?._id) {
+              dispatch(feedLikeDislike({ postId: feed?.payload?.feed?._id })).unwrap().then(() => {
+                dispatch(getFeed(id));
+              });
+            }
           }}
         />
       </>

@@ -11,7 +11,7 @@ const feedSchema = mongoose.Schema({
     createdAt:
     {
         type: Date,
-        default: Date.now(), // give the default date
+        default: Date.now, // give the default date
     },
     post:
     {
@@ -30,20 +30,22 @@ const feedSchema = mongoose.Schema({
         }
     ],
 
-    comment: [
+    comments: [
         {
-            type: String,
+            comment: {
+                type: String,
+                required: [true, "Please provide comment"],
+            },
             commentedBy: {
                 type: mongoose.Types.ObjectId,
                 ref: "User",
             },
-
             commentTime: {
                 type: Date,
-                defualt: Date.now(),
-            }
+                default: Date.now,
+            },
         },
-    ]
+    ],
 });
 
 export default mongoose.model("Feed", feedSchema);

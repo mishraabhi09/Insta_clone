@@ -62,7 +62,7 @@ const Search = () => {
 
       {!value ? (
         <div className="image-gallery">
-          {feeds[0]?.feed?.map((data) => {
+          {feeds?.map((data) => {
             return (
               <div className="image-box" key={data?._id}>
                 <Link to={`/feed/${data?._id}`}>

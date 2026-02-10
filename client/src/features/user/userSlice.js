@@ -7,14 +7,6 @@ import {
 } from "../../utils/localStorage";
 import { toast } from "react-toastify";
 
-axios.interceptors.request.use((config) => {
-  const user = getUserFromLocalStorage();
-  if (user) {
-    config.headers.common["authorization"] = `Bearer ${user.token}`;
-  }
-  return config;
-});
-
 export const registerUser = createAsyncThunk(
   "user/registerUser",
   async (user, thunkAPI) => {
@@ -24,7 +16,12 @@ export const registerUser = createAsyncThunk(
 
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      if (error.response && error.response.status === 401) {
+        removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
+        return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
+      }
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -38,7 +35,12 @@ export const loginUser = createAsyncThunk(
 
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      if (error.response && error.response.status === 401) {
+        removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
+        return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
+      }
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -47,11 +49,19 @@ export const getUserProfile = createAsyncThunk(
   "user/userProfile",
   async (id, thunkAPI) => {
     try {
-      const resp = await axios.get(`/api/v1/user/userProfile/${id}`);
+      const userLocal = getUserFromLocalStorage();
+      const token = userLocal?.token;
+      if (!userLocal || !token) {
+        throw new Error('User not authenticated');
+      }
+      const resp = await axios.get(`/api/v1/user/userProfile/${id}`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
 
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      // Don't remove user for profile fetch errors
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -60,18 +70,19 @@ export const searchUser = createAsyncThunk(
   "user/searchUser",
   async (username, thunkAPI) => {
     try {
-      const resp = await axios.get(
-        `/api/v1/user/search/user?search=${username}`,
-        {
-          headers: {
-            authorization: `Bearer ${getUserFromLocalStorage().token}`,
-          },
-        }
-      );
+      const userLocal = getUserFromLocalStorage();
+      const token = userLocal?.token;
+      if (!userLocal || !token) {
+        throw new Error('User not authenticated');
+      }
+      const resp = await axios.get(`/api/v1/user/search/user?search=${username}`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
 
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      // Don't remove user for search errors
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -80,15 +91,23 @@ export const userUpdate = createAsyncThunk(
   "user/userUpdate",
   async (user, thunkAPI) => {
     try {
+      const userLocal = getUserFromLocalStorage();
+      const token = userLocal?.token;
+      if (!userLocal || !token) {
+        throw new Error('User not authenticated');
+      }
       const resp = await axios.patch("/api/v1/user/user", user, {
-        headers: {
-          authorization: `Bearer ${getUserFromLocalStorage().token}`,
-        },
+        headers: { authorization: `Bearer ${token}` },
       });
 
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      if (error.response && error.response.status === 401) {
+        removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
+        return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
+      }
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -97,19 +116,22 @@ export const followUser = createAsyncThunk(
   "user/followUser",
   async ({ userId }, thunkAPI) => {
     try {
-      const resp = await axios.patch(
-        `/api/v1/user/followUser`,
-        { userId },
-        {
-          headers: {
-            authorization: `Bearer ${getUserFromLocalStorage().token}`,
-          },
-        }
-      );
-      window.location.reload();
+      const userLocal = getUserFromLocalStorage();
+      const token = userLocal?.token;
+      if (!userLocal || !token) {
+        throw new Error('User not authenticated');
+      }
+      const resp = await axios.patch(`/api/v1/user/followUser`, { userId }, {
+        headers: { authorization: `Bearer ${token}` },
+      });
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      if (error.response && error.response.status === 401) {
+        removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
+        return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
+      }
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -118,19 +140,22 @@ export const unFollowUser = createAsyncThunk(
   "user/unFollowUser",
   async ({ userId }, thunkAPI) => {
     try {
-      const resp = await axios.patch(
-        `/api/v1/user/unFollowUser`,
-        { userId },
-        {
-          headers: {
-            authorization: `Bearer ${getUserFromLocalStorage().token}`,
-          },
-        }
-      );
-      window.location.reload();
+      const userLocal = getUserFromLocalStorage();
+      const token = userLocal?.token;
+      if (!userLocal || !token) {
+        throw new Error('User not authenticated');
+      }
+      const resp = await axios.patch(`/api/v1/user/unFollowUser`, { userId }, {
+        headers: { authorization: `Bearer ${token}` },
+      });
       return resp.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response.data.msg);
+      if (error.response && error.response.status === 401) {
+        removeUserFromLocalStorage();
+        // Don't redirect here, let the component handle it
+        return thunkAPI.rejectWithValue("Unauthorized! Logging Out");
+      }
+      return thunkAPI.rejectWithValue(error.response?.data?.msg || error.message || 'Something went wrong');
     }
   }
 );
@@ -161,15 +186,14 @@ const userSlice = createSlice({
 
     [registerUser.fulfilled]: (state, { payload }) => {
       state.isLoading = false;
-      const user = payload;
-      state.user = user;
-      addUserToLocalStorage(user);
-      toast.success(`Hi There!, ${user.username}`);
+      state.user = payload;
+      addUserToLocalStorage(payload);
+      toast.success(`Hi There!, ${payload.username}`);
     },
 
     [registerUser.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Registration failed');
     },
 
     [loginUser.pending]: (state) => {
@@ -178,15 +202,14 @@ const userSlice = createSlice({
 
     [loginUser.fulfilled]: (state, { payload }) => {
       state.isLoading = false;
-      const user = payload;
-      state.user = user;
-      addUserToLocalStorage(user);
-      toast.success(`Welcome Back!, ${user.username}`);
+      state.user = payload;
+      addUserToLocalStorage(payload);
+      toast.success(`Welcome Back!, ${payload.username}`);
     },
 
     [loginUser.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Login failed');
     },
 
     [getUserProfile.pending]: (state) => {
@@ -195,12 +218,12 @@ const userSlice = createSlice({
 
     [getUserProfile.fulfilled]: (state, { payload }) => {
       state.isLoading = false;
-      state.userProfile = { ...state.userProfile, payload };
+      state.userProfile = payload;
     },
 
     [getUserProfile.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Failed to load user profile');
     },
 
     [searchUser.pending]: (state) => {
@@ -209,12 +232,12 @@ const userSlice = createSlice({
 
     [searchUser.fulfilled]: (state, { payload }) => {
       state.isLoading = false;
-      state.users = { ...payload };
+      state.users = payload;
     },
 
     [searchUser.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Search failed');
     },
 
     [userUpdate.pending]: (state) => {
@@ -222,16 +245,20 @@ const userSlice = createSlice({
     },
 
     [userUpdate.fulfilled]: (state, { payload }) => {
-      const user = payload;
       state.isLoading = false;
-      state.user = user;
-      addUserToLocalStorage(user);
-      toast.success(`Your Profile Updated! ${user.username}`);
+      state.user = payload;
+      addUserToLocalStorage(payload);
+      // Also update the user profile cache if it's the current user
+      if (state.userProfile.payload && state.userProfile.payload.user && 
+          state.userProfile.payload.user._id === payload._id) {
+        state.userProfile.payload.user = payload;
+      }
+      toast.success(`Your Profile Updated! ${payload.username}`);
     },
 
     [userUpdate.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Profile update failed');
     },
 
     [followUser.pending]: (state) => {
@@ -239,16 +266,24 @@ const userSlice = createSlice({
     },
 
     [followUser.fulfilled]: (state, { payload }) => {
-      const user = payload;
       state.isLoading = false;
-      state.user = user;
-      addUserToLocalStorage(user);
+      // Update user state if returned
+      if (payload) {
+        state.user = payload;
+        addUserToLocalStorage(payload);
+      }
+      // Update the user profile cache if it exists
+      if (state.userProfile && state.userProfile.payload && state.userProfile.payload.user) {
+        // If the followed user is the one in the profile view, update their info
+        // We get updated user info in payload, so update accordingly
+        state.userProfile.payload.user = payload; // This is the current user's updated profile
+      }
       toast.success(`Followed SuccessFully!`);
     },
 
     [followUser.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Follow failed');
     },
 
     [unFollowUser.pending]: (state) => {
@@ -256,16 +291,23 @@ const userSlice = createSlice({
     },
 
     [unFollowUser.fulfilled]: (state, { payload }) => {
-      const user = payload;
       state.isLoading = false;
-      state.user = user;
-      addUserToLocalStorage(user);
+      // Update user state if returned
+      if (payload) {
+        state.user = payload;
+        addUserToLocalStorage(payload);
+      }
+      // Update the user profile cache if it exists
+      if (state.userProfile && state.userProfile.payload && state.userProfile.payload.user) {
+        // Update with current user's updated profile
+        state.userProfile.payload.user = payload;
+      }
       toast.success(`UnFollow SuccessFully!`);
     },
 
     [unFollowUser.rejected]: (state, { payload }) => {
       state.isLoading = false;
-      toast.error(payload);
+      toast.error(payload || 'Unfollow failed');
     },
   },
 });

@@ -4,10 +4,14 @@ import styled from "styled-components";
 import { NavLink } from "react-router-dom";
 import { Home2, SearchNormal, Export } from "iconsax-react";
 
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { logoutUser } from "../features/user/userSlice";
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   return (
     <Wrapper>
@@ -43,6 +47,17 @@ const Navbar = () => {
             <NavLink to={`/user/${user._id}`}>
               <img className="profile" src={user?.avatar} alt="profile" />
             </NavLink>
+          </NavItem>
+          <NavItem>
+            <button
+              className="nav-logout"
+              onClick={() => {
+                dispatch(logoutUser("Logged out"));
+                navigate("/landing");
+              }}
+            >
+              Log Out
+            </button>
           </NavItem>
         </NavItems>
       </ContentWrapper>
@@ -116,5 +131,14 @@ const NavItem = styled.li`
     &:hover {
       color: #399ffd;
     }
+  }
+  .nav-logout {
+    background: transparent;
+    border: none;
+    color: #ff5454;
+    font-family: "Poppins";
+    cursor: pointer;
+    font-size: 16px;
+    padding: 6px 8px;
   }
 `;
